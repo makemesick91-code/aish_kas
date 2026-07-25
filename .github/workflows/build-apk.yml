@@ -1,5 +1,4 @@
 name: Build APK
-Jalan otomatis setiap kali kamu upload/push, atau bisa dijalankan manual
 on: push: branches: [ main, master ] workflow_dispatch:
 jobs: build: runs-on: ubuntu-latest steps: - name: Checkout uses: actions/checkout@v4
   - name: Set up JDK 17
