@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1E3A9E">
+<title>Aish Kas</title>
+<style>
+/* ============================================================
+   AISH KAS — POS offline untuk UMKM
+   Satu keluarga desain dengan Aish Financial Tracker:
+   biru #1E3A9E, kartu membulat, navbar blur di bawah.
+   Font: Plus Jakarta Sans bila online, fallback sistem.
+   ============================================================ */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --brand:#1E3A9E; --brand-600:#2A4FC4; --brand-700:#122A78; --brand-050:#EAEEFB;
+  --mint:#0E9F6E; --mint-050:#E3F5EE;
+  --amber:#B45309; --amber-050:#FDF3E3;
+  --red:#C81E1E; --red-050:#FBEAEA;
+  --ink:#101828; --ink-2:#475467; --ink-3:#98A2B3;
+  --bg:#F4F6FB; --card:#FFFFFF; --line:#E7EAF3;
+  --r:16px; --r-sm:12px;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 4px 14px rgba(30,58,158,.07);
+  --font:'Plus Jakarta Sans',-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+html,body{height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased;overflow:hidden;font-size:14.5px;line-height:1.45}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;max-width:560px;margin:0 auto;background:var(--bg)}
+
+/* ---------- Header ---------- */
+.header{background:linear-gradient(135deg,var(--brand) 0%,var(--brand-600) 85%);
+  color:#fff;padding:calc(14px + env(safe-area-inset-top)) 18px 14px;flex-shrink:0}
+.header h1{font-size:17px;font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
+.header .sub{font-size:11.5px;opacity:.75;margin-top:1px}
+
+/* ---------- Views & scroll ---------- */
+.view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:16px 16px calc(104px + env(safe-area-inset-bottom));display:none}
+.view.on{display:block}
+.view::-webkit-scrollbar{display:none}
+
+/* ---------- Bottom navbar (persis pola Financial Tracker) ---------- */
+.navbar{position:absolute;left:0;right:0;bottom:0;height:calc(84px + env(safe-area-inset-bottom));
+  background:#ffffffe8;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);display:flex;align-items:flex-start;
+  justify-content:space-around;padding:10px 8px 0;z-index:40}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;
+  font-weight:600;color:var(--ink-3);cursor:pointer;width:56px;padding-top:4px;transition:.15s}
+.navitem svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
+.navitem.on{color:var(--brand)}
+.navitem.on svg{stroke-width:2.2}
+
+/* ---------- Kartu & komponen umum ---------- */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);
+  padding:16px;margin-bottom:12px;border:1px solid #fff}
+.card h3{font-size:13px;font-weight:700;color:var(--ink-2);text-transform:uppercase;
+  letter-spacing:.6px;margin-bottom:12px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.muted{color:var(--ink-3);font-size:12px}
+.money{font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;
+  padding:3px 10px;border-radius:99px}
+.pill.blue{background:var(--brand-050);color:var(--brand)}
+.pill.mint{background:var(--mint-050);color:var(--mint)}
+.pill.red{background:var(--red-050);color:var(--red)}
+.pill.amber{background:var(--amber-050);color:var(--amber)}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  border:none;border-radius:14px;padding:14px;font-family:var(--font);font-size:15px;
+  font-weight:700;cursor:pointer;transition:.15s;background:var(--brand);color:#fff}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:var(--brand-050);color:var(--brand)}
+.btn.line{background:#fff;color:var(--ink-2);border:1.5px solid var(--line)}
+.btn.danger{background:var(--red-050);color:var(--red)}
+.btn.sm{padding:9px 14px;font-size:13px;width:auto;border-radius:11px}
+.btn:disabled{opacity:.45;pointer-events:none}
+
+.input,select.input,textarea.input{width:100%;border:1.5px solid var(--line);border-radius:12px;
+  padding:12px 14px;font-family:var(--font);font-size:14.5px;background:#fff;color:var(--ink);
+  outline:none;transition:border-color .15s}
+.input:focus{border-color:var(--brand)}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ---------- Chips kategori ---------- */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:7px 15px;border-radius:99px;font-size:12.5px;font-weight:700;
+  background:#fff;color:var(--ink-2);border:1.5px solid var(--line);cursor:pointer;transition:.15s}
+.chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+
+/* ---------- Grid produk kasir ---------- */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:9px}
+.pcard{background:#fff;border-radius:var(--r-sm);border:1.5px solid var(--line);
+  padding:11px 11px 9px;cursor:pointer;transition:.12s;position:relative;overflow:hidden}
+.pcard:active{transform:scale(.96)}
+.pcard.dis{opacity:.45;pointer-events:none}
+.pcard .nm{font-size:12.5px;font-weight:700;line-height:1.25;height:32px;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pcard .pr{font-size:12.5px;font-weight:800;color:var(--brand);margin-top:5px}
+.pcard .st{font-size:10.5px;color:var(--ink-3);margin-top:2px}
+.pcard .st.low{color:var(--red);font-weight:700}
+.pcard .qty{position:absolute;top:7px;right:7px;min-width:20px;height:20px;border-radius:99px;
+  background:var(--mint);color:#fff;font-size:11px;font-weight:800;display:flex;
+  align-items:center;justify-content:center;padding:0 6px}
+
+/* ---------- Bar keranjang ---------- */
+.cartbar{position:absolute;left:12px;right:12px;bottom:calc(92px + env(safe-area-inset-bottom));
+  background:var(--brand);border-radius:18px;box-shadow:0 8px 24px rgba(30,58,158,.35);
+  color:#fff;padding:12px 16px;display:none;align-items:center;gap:12px;z-index:35;cursor:pointer}
+.cartbar.on{display:flex}
+.cartbar .n{background:#ffffff2b;border-radius:10px;min-width:34px;height:34px;display:flex;
+  align-items:center;justify-content:center;font-weight:800;font-size:13px}
+.cartbar .t{flex:1}
+.cartbar .t small{display:block;font-size:10.5px;opacity:.75;font-weight:600}
+.cartbar .t b{font-size:16.5px}
+.cartbar .go{background:#fff;color:var(--brand);border-radius:11px;padding:9px 16px;
+  font-weight:800;font-size:13.5px}
+
+/* ---------- Sheet / modal ---------- */
+.scrim{position:fixed;inset:0;background:rgba(13,20,44,.5);opacity:0;pointer-events:none;
+  transition:.2s;z-index:60}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:#fff;
+  border-radius:22px 22px 0 0;z-index:70;transform:translateY(105%);transition:.25s cubic-bezier(.3,.7,.3,1);
+  max-height:88vh;display:flex;flex-direction:column}
+.sheet.on{transform:none}
+.sheet .grip{width:40px;height:4px;border-radius:99px;background:var(--line);margin:10px auto 2px;flex-shrink:0}
+.sheet .body{overflow-y:auto;padding:14px 18px calc(18px + env(safe-area-inset-bottom))}
+.sheet h2{font-size:16.5px;font-weight:800;margin-bottom:14px}
+
+/* ---------- Baris item keranjang ---------- */
+.crow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+.crow .inf{flex:1;min-width:0}
+.crow .inf .n{font-weight:700;font-size:13.5px}
+.crow .inf .p{font-size:11.5px;color:var(--ink-3)}
+.crow .inf .d{font-size:11px;color:var(--mint);font-weight:700}
+.qbtn{width:30px;height:30px;border-radius:9px;border:1.5px solid var(--line);background:#fff;
+  color:var(--brand);font-size:17px;font-weight:800;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;font-family:var(--font)}
+.crow .q{min-width:24px;text-align:center;font-weight:800;font-size:14px}
+.crow .tot{min-width:66px;text-align:right;font-weight:700;font-size:13px}
+
+/* ---------- Ringkasan pembayaran ---------- */
+.sumrow{display:flex;justify-content:space-between;padding:5px 0;font-size:13.5px}
+.sumrow.big{font-size:16.5px;font-weight:800;padding-top:10px}
+.sumrow .clickable{color:var(--brand);font-weight:700;text-decoration:underline;
+  text-decoration-style:dotted;cursor:pointer}
+.paytabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.paytab{padding:12px;border-radius:12px;border:1.5px solid var(--line);background:#fff;
+  text-align:center;font-weight:800;font-size:14px;color:var(--ink-2);cursor:pointer}
+.paytab.on{border-color:var(--brand);background:var(--brand-050);color:var(--brand)}
+.cashopts{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.qris-box{text-align:center;padding:10px 0}
+.qris-box img{max-width:82%;border-radius:12px;border:1.5px solid var(--line)}
+
+/* ---------- Daftar (riwayat, produk, laporan) ---------- */
+.list-item{display:flex;align-items:center;gap:12px;padding:13px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.list-item:last-child{border-bottom:none}
+.list-item .ic{width:40px;height:40px;border-radius:12px;background:var(--brand-050);color:var(--brand);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0}
+.list-item .inf{flex:1;min-width:0}
+.list-item .inf .n{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-item .inf .s{font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.list-item .val{text-align:right;font-weight:800;font-size:13.5px;flex-shrink:0}
+.list-item .val small{display:block;font-weight:600;font-size:10.5px;color:var(--ink-3)}
+
+/* ---------- Statistik dashboard ---------- */
+.stat3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:12px}
+.stat{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:13px 12px;border:1px solid #fff}
+.stat .l{font-size:10.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.4px}
+.stat .v{font-size:15px;font-weight:800;margin-top:4px;color:var(--brand)}
+.stat.mint .v{color:var(--mint)}
+
+/* ---------- FAB ---------- */
+.fab{position:absolute;right:16px;bottom:calc(100px + env(safe-area-inset-bottom));width:54px;height:54px;
+  border-radius:18px;background:var(--brand);color:#fff;border:none;font-size:26px;font-weight:600;
+  box-shadow:0 8px 20px rgba(30,58,158,.4);cursor:pointer;z-index:30;display:none;font-family:var(--font)}
+.fab.on{display:block}
+
+/* ---------- Struk pratinjau ---------- */
+.receipt{font-family:'Courier New',monospace;font-size:11px;background:#fff;border:1px dashed var(--ink-3);
+  border-radius:8px;padding:12px;white-space:pre;overflow-x:auto;line-height:1.5;color:#222}
+
+/* ---------- Toast ---------- */
+#toast{position:fixed;left:50%;bottom:calc(108px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;padding:11px 20px;border-radius:12px;font-size:13px;font-weight:600;
+  opacity:0;transition:.25s;z-index:99;pointer-events:none;max-width:86%;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%)}
+
+/* ---------- Sukses dialog ---------- */
+.okwrap{text-align:center;padding:8px 0 4px}
+.okwrap .ic{width:72px;height:72px;border-radius:50%;background:var(--mint-050);margin:0 auto 12px;
+  display:flex;align-items:center;justify-content:center}
+.okwrap .ic svg{width:38px;height:38px;stroke:var(--mint);fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.okwrap .chg{font-size:26px;font-weight:800;color:var(--brand)}
+.empty{text-align:center;color:var(--ink-3);padding:40px 20px;font-size:13px}
+.empty svg{width:44px;height:44px;stroke:var(--ink-3);fill:none;stroke-width:1.5;margin-bottom:10px}
+.seg{display:flex;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:3px;margin-bottom:12px}
+.seg button{flex:1;border:none;background:none;padding:8px;border-radius:9px;font-family:var(--font);
+  font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer}
+.seg button.on{background:var(--brand);color:#fff}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="header">
+    <h1>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="9" rx="2"/><path d="M7 11V7a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"/><path d="M8 15h.01M12 15h.01M16 15h.01"/></svg>
+      <span id="hdrTitle">Aish Kas</span>
+    </h1>
+    <div class="sub" id="hdrSub">Kasir offline untuk usahamu</div>
+  </div>
+
+  <!-- ================= BERANDA ================= -->
+  <div class="view" id="view-home">
+    <div class="stat3">
+      <div class="stat"><div class="l">Omzet Hari Ini</div><div class="v money" id="stOmzet">Rp 0</div></div>
+      <div class="stat mint"><div class="l">Laba</div><div class="v money" id="stLaba">Rp 0</div></div>
+      <div class="stat"><div class="l">Transaksi</div><div class="v" id="stTrx">0</div></div>
+    </div>
+    <div class="card">
+      <h3>Aksi Cepat</h3>
+      <div class="grid2">
+        <button class="btn" onclick="nav('kasir')">＋ Transaksi Baru</button>
+        <button class="btn ghost" onclick="nav('produk')">Kelola Produk</button>
+      </div>
+    </div>
+    <div class="card" id="lowCard" style="display:none">
+      <h3 style="color:var(--red)">⚠ Stok Menipis</h3>
+      <div id="lowList"></div>
+    </div>
+    <div class="card">
+      <h3>Transaksi Terakhir</h3>
+      <div id="recentList"><div class="empty">Belum ada transaksi</div></div>
+    </div>
+  </div>
+
+  <!-- ================= KASIR ================= -->
+  <div class="view" id="view-kasir">
+    <div class="field" style="margin-bottom:10px">
+      <input class="input" id="searchBox" placeholder="🔍  Cari produk / SKU…" oninput="renderProducts()">
+    </div>
+    <div class="chips" id="catChips"></div>
+    <div class="pgrid" id="productGrid"></div>
+    <div class="empty" id="noProducts" style="display:none">
+      Belum ada produk.<br>Tambahkan lewat menu <b>Produk</b>.
+    </div>
+  </div>
+
+  <!-- ================= PRODUK ================= -->
+  <div class="view" id="view-produk">
+    <div class="field" style="margin-bottom:10px">
+      <input class="input" id="prodSearch" placeholder="🔍  Cari produk…" oninput="renderProdukList()">
+    </div>
+    <div class="card">
+      <div class="row" style="margin-bottom:8px">
+        <h3 style="margin:0">Kategori</h3>
+        <button class="btn ghost sm" onclick="openKategori()">Kelola</button>
+      </div>
+      <div class="chips" id="katList" style="padding-bottom:0"></div>
+    </div>
+    <div class="card" style="padding:6px 16px">
+      <div id="produkList"></div>
+    </div>
+  </div>
+
+  <!-- ================= RIWAYAT ================= -->
+  <div class="view" id="view-riwayat">
+    <div class="seg" id="histSeg">
+      <button class="on" onclick="setHistPeriod('hari',this)">Hari Ini</button>
+      <button onclick="setHistPeriod('minggu',this)">Minggu Ini</button>
+      <button onclick="setHistPeriod('bulan',this)">Bulan Ini</button>
+    </div>
+    <div class="card" style="padding:6px 16px">
+      <div id="histList"></div>
+    </div>
+  </div>
+
+  <!-- ================= LAPORAN ================= -->
+  <div class="view" id="view-laporan">
+    <div class="seg" id="repSeg">
+      <button class="on" onclick="setRepPeriod('hari',this)">Harian</button>
+      <button onclick="setRepPeriod('minggu',this)">Mingguan</button>
+      <button onclick="setRepPeriod('bulan',this)">Bulanan</button>
+    </div>
+    <div class="stat3">
+      <div class="stat"><div class="l">Omzet</div><div class="v money" id="repOmzet">Rp 0</div></div>
+      <div class="stat mint"><div class="l">Laba</div><div class="v money" id="repLaba">Rp 0</div></div>
+      <div class="stat"><div class="l">Transaksi</div><div class="v" id="repTrx">0</div></div>
+    </div>
+    <div class="card">
+      <h3>Produk Terlaris</h3>
+      <div id="topList"><div class="empty">Belum ada data</div></div>
+    </div>
+    <div class="card">
+      <h3>Ekspor Laporan</h3>
+      <div class="grid2">
+        <button class="btn ghost" onclick="exportCsv()">📄 Simpan CSV</button>
+        <button class="btn line" onclick="printReport()">🖨 Cetak Ringkasan</button>
+      </div>
+      <div class="muted" style="margin-top:8px">CSV tersimpan ke folder Download — bisa dibuka di Excel/WPS.</div>
+    </div>
+  </div>
+
+  <!-- ================= PENGATURAN ================= -->
+  <div class="view" id="view-setelan">
+    <div class="card">
+      <h3>Profil Toko</h3>
+      <div class="field"><label>Nama Toko</label><input class="input" id="setNama"></div>
+      <div class="field"><label>Alamat</label><input class="input" id="setAlamat"></div>
+      <div class="grid2">
+        <div class="field"><label>No. Telepon</label><input class="input" id="setTelp"></div>
+        <div class="field"><label>Nama Kasir</label><input class="input" id="setKasir"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Simbol Mata Uang</label><input class="input" id="setCur" placeholder="Rp"></div>
+        <div class="field"><label>Pajak (%)</label><input class="input" id="setPajak" type="number" inputmode="decimal" placeholder="0"></div>
+      </div>
+      <div class="field"><label>Pesan Kaki Struk</label><input class="input" id="setFooter"></div>
+      <button class="btn" onclick="saveSettings()">Simpan Profil</button>
+    </div>
+
+    <div class="card">
+      <h3>QRIS Statis</h3>
+      <div id="qrisPreview" class="qris-box" style="display:none"><img id="qrisImg" alt="QRIS"></div>
+      <input type="file" id="qrisFile" accept="image/*" style="display:none" onchange="loadQris(this)">
+      <div class="grid2">
+        <button class="btn ghost" onclick="document.getElementById('qrisFile').click()">Unggah Gambar QRIS</button>
+        <button class="btn danger" id="qrisDel" style="display:none" onclick="removeQris()">Hapus</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Printer Bluetooth</h3>
+      <div id="printerNow" class="muted" style="margin-bottom:10px">Belum ada printer tersimpan.</div>
+      <div class="field"><label>Ukuran Kertas</label>
+        <div class="paytabs" style="margin:0">
+          <div class="paytab" id="pap58" onclick="setPaper(58)">58 mm</div>
+          <div class="paytab" id="pap80" onclick="setPaper(80)">80 mm</div>
+        </div>
+      </div>
+      <div id="printerList"></div>
+      <div class="grid2" style="margin-top:10px">
+        <button class="btn ghost" onclick="scanPrinters()">Cari Printer</button>
+        <button class="btn line" onclick="testPrint()">Tes Cetak</button>
+      </div>
+      <div class="muted" style="margin-top:8px">Pasangkan printer lewat Pengaturan Bluetooth HP dulu, lalu tekan “Cari Printer”.</div>
+    </div>
+
+    <div class="card">
+      <h3>Cadangkan &amp; Pulihkan Data</h3>
+      <div class="muted" style="margin-bottom:10px">Semua data (produk, transaksi, pengaturan) dalam satu file — 100% offline.</div>
+      <input type="file" id="restoreFile" accept=".json,application/json" style="display:none" onchange="restoreData(this)">
+      <div class="grid2">
+        <button class="btn" onclick="backupData()">Cadangkan</button>
+        <button class="btn line" onclick="document.getElementById('restoreFile').click()">Pulihkan</button>
+      </div>
+    </div>
+    <div class="muted" style="text-align:center;padding:6px 0 14px">Aish Kas v1.0 — offline &amp; privat</div>
+  </div>
+
+  <!-- ================= NAVBAR ================= -->
+  <div class="navbar">
+    <div class="navitem on" id="nav-home" onclick="nav('home')">
+      <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Beranda</div>
+    <div class="navitem" id="nav-kasir" onclick="nav('kasir')">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2.5 3.5h3l2.6 12.4h10.6L21.5 7H6.1"/></svg>Kasir</div>
+    <div class="navitem" id="nav-produk" onclick="nav('produk')">
+      <svg viewBox="0 0 24 24"><path d="M21 8.2 12 3 3 8.2v7.6L12 21l9-5.2z"/><path d="M3.3 8.3 12 13l8.7-4.7M12 21v-8"/></svg>Produk</div>
+    <div class="navitem" id="nav-riwayat" onclick="nav('riwayat')">
+      <svg viewBox="0 0 24 24"><path d="M6 2h12v20l-2-1.4L14 22l-2-1.4L10 22l-2-1.4L6 22z"/><path d="M9.5 7.5h5M9.5 11h5M9.5 14.5h3"/></svg>Riwayat</div>
+    <div class="navitem" id="nav-laporan" onclick="nav('laporan')">
+      <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>Laporan</div>
+    <div class="navitem" id="nav-setelan" onclick="nav('setelan')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/></svg>Setelan</div>
+  </div>
+
+  <!-- Bar keranjang mengambang -->
+  <div class="cartbar" id="cartbar" onclick="openCart()">
+    <div class="n" id="cbCount">0</div>
+    <div class="t"><small>Total belanja</small><b class="money" id="cbTotal">Rp 0</b></div>
+    <div class="go">Bayar</div>
+  </div>
+
+  <button class="fab" id="fabAdd" onclick="openProdukForm()">＋</button>
+</div>
+
+<!-- ================= SHEETS ================= -->
+<div class="scrim" id="scrim" onclick="closeSheets()"></div>
+
+<div class="sheet" id="sheetCart"><div class="grip"></div><div class="body" id="sheetCartBody"></div></div>
+<div class="sheet" id="sheetPay"><div class="grip"></div><div class="body" id="sheetPayBody"></div></div>
+<div class="sheet" id="sheetOk"><div class="grip"></div><div class="body" id="sheetOkBody"></div></div>
+<div class="sheet" id="sheetProduk"><div class="grip"></div><div class="body" id="sheetProdukBody"></div></div>
+<div class="sheet" id="sheetKategori"><div class="grip"></div><div class="body" id="sheetKategoriBody"></div></div>
+<div class="sheet" id="sheetDetail"><div class="grip"></div><div class="body" id="sheetDetailBody"></div></div>
+<div class="sheet" id="sheetDiskon"><div class="grip"></div><div class="body" id="sheetDiskonBody"></div></div>
+
+<div id="toast"></div>
+<script>
+/* ============================================================
+   AISH KAS — logika aplikasi
+   Semua data di localStorage (kunci 'aishkas_v1'), 100% offline.
+   Jembatan native (Android): window.AishApp
+     .saveBackup(json, nama)         -> lokasi / ""
+     .saveFile(teks, nama, mime)     -> lokasi / ""
+     .hasBluetoothPermission()       -> bool
+     .requestBluetoothPermission()   -> callback window.onAishBtPermission(granted)
+     .isBluetoothOn()                -> bool
+     .getPairedPrinters()            -> JSON [{name,mac}]
+     .printEscPos(base64, mac)       -> "ok" / pesan error
+   ============================================================ */
+
+/* ------------------------- Penyimpanan ------------------------- */
+var KEY = 'aishkas_v1';
+var DB = load();
+
+function defaultDB() {
+  return {
+    produk: [],       // {id, nama, sku, kat, beli, jual, stok, batas}
+    kategori: [],     // {id, nama}
+    transaksi: [],    // lihat checkout()
+    set: {
+      nama: 'Toko Saya', alamat: '', telp: '', kasir: 'Kasir',
+      cur: 'Rp', pajak: 0, footer: 'Terima kasih atas kunjungan Anda!',
+      qris: '', paper: 58, printerMac: '', printerNama: ''
+    },
+    nextId: 1
+  };
+}
+function load() {
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (!raw) return defaultDB();
+    var d = JSON.parse(raw);
+    // gabungkan dengan default supaya field baru selalu ada
+    var base = defaultDB();
+    d.set = Object.assign(base.set, d.set || {});
+    d.produk = d.produk || []; d.kategori = d.kategori || [];
+    d.transaksi = d.transaksi || []; d.nextId = d.nextId || 1;
+    return d;
+  } catch (e) { return defaultDB(); }
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(DB)); }
+function uid() { return DB.nextId++; }
+
+/* --------------------------- Util --------------------------- */
+function fmt(n) {
+  n = Math.round(n || 0);
+  return DB.set.cur + ' ' + n.toLocaleString('id-ID');
+}
+function plain(n) { return Math.round(n || 0).toLocaleString('id-ID'); }
+function esc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(function () { t.classList.remove('on'); }, 2600);
+}
+function startOfDay(d) { d = new Date(d); d.setHours(0, 0, 0, 0); return d.getTime(); }
+function periodBounds(p) {
+  var now = Date.now(), d = new Date();
+  d.setHours(0, 0, 0, 0);
+  if (p === 'minggu') { var wd = (d.getDay() + 6) % 7; d.setDate(d.getDate() - wd); } // Senin
+  if (p === 'bulan') d.setDate(1);
+  return [d.getTime(), now];
+}
+function tgl(ms) {
+  var d = new Date(ms);
+  return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear() +
+    ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+}
+function noStruk() {
+  var d = new Date();
+  var ymd = d.getFullYear() + ('0' + (d.getMonth() + 1)).slice(-2) + ('0' + d.getDate()).slice(-2);
+  var b = periodBounds('hari');
+  var n = DB.transaksi.filter(function (t) { return t.waktu >= b[0]; }).length + 1;
+  return 'AK-' + ymd + '-' + ('000' + n).slice(-4);
+}
+function hasBridge() { return typeof window.AishApp !== 'undefined'; }
+
+/* ------------------------- Navigasi ------------------------- */
+var VIEWS = ['home', 'kasir', 'produk', 'riwayat', 'laporan', 'setelan'];
+var TITLES = {
+  home: ['Aish Kas', 'Kasir offline untuk usahamu'],
+  kasir: ['Kasir', 'Ketuk produk untuk menambah'],
+  produk: ['Produk', 'Kelola barang & kategori'],
+  riwayat: ['Riwayat', 'Semua transaksi tersimpan'],
+  laporan: ['Laporan', 'Ringkasan penjualan'],
+  setelan: ['Setelan', 'Toko, printer & cadangan']
+};
+function nav(v) {
+  VIEWS.forEach(function (x) {
+    document.getElementById('view-' + x).classList.toggle('on', x === v);
+    document.getElementById('nav-' + x).classList.toggle('on', x === v);
+  });
+  document.getElementById('hdrTitle').textContent = TITLES[v][0];
+  document.getElementById('hdrSub').textContent = TITLES[v][1];
+  document.getElementById('fabAdd').classList.toggle('on', v === 'produk');
+  document.getElementById('cartbar').classList.toggle('on', v === 'kasir' && cartCount() > 0);
+  if (v === 'home') renderHome();
+  if (v === 'kasir') { renderCatChips(); renderProducts(); }
+  if (v === 'produk') { renderKatChips(); renderProdukList(); }
+  if (v === 'riwayat') renderHist();
+  if (v === 'laporan') renderLaporan();
+  if (v === 'setelan') renderSetelan();
+  closeSheets();
+}
+
+/* -------------------------- Sheets -------------------------- */
+function openSheet(id) {
+  document.getElementById('scrim').classList.add('on');
+  document.getElementById(id).classList.add('on');
+}
+function closeSheets() {
+  document.getElementById('scrim').classList.remove('on');
+  var sheets = document.querySelectorAll('.sheet');
+  for (var i = 0; i < sheets.length; i++) sheets[i].classList.remove('on');
+}
+
+/* ========================= BERANDA ========================= */
+function renderHome() {
+  var b = periodBounds('hari');
+  var trx = DB.transaksi.filter(function (t) { return t.waktu >= b[0] && !t.batal; });
+  var omzet = 0, laba = 0;
+  trx.forEach(function (t) {
+    omzet += t.total;
+    t.items.forEach(function (i) { laba += i.total - i.beli * i.qty; });
+  });
+  document.getElementById('stOmzet').textContent = fmt(omzet);
+  document.getElementById('stLaba').textContent = fmt(laba);
+  document.getElementById('stTrx').textContent = trx.length;
+
+  // stok menipis
+  var low = DB.produk.filter(function (p) { return p.stok <= p.batas; });
+  document.getElementById('lowCard').style.display = low.length ? '' : 'none';
+  document.getElementById('lowList').innerHTML = low.map(function (p) {
+    return '<div class="sumrow"><span>' + esc(p.nama) + '</span>' +
+      '<span class="pill red">sisa ' + p.stok + '</span></div>';
+  }).join('');
+
+  // transaksi terakhir
+  var recent = DB.transaksi.slice(-5).reverse();
+  document.getElementById('recentList').innerHTML = recent.length ? recent.map(function (t) {
+    return '<div class="list-item" onclick="openDetail(' + t.id + ')">' +
+      '<div class="ic">' + (t.metode === 'QRIS' ? 'QR' : 'Rp') + '</div>' +
+      '<div class="inf"><div class="n">' + esc(t.no) + (t.batal ? ' <span class="pill red">batal</span>' : '') +
+      '</div><div class="s">' + tgl(t.waktu) + '</div></div>' +
+      '<div class="val money">' + fmt(t.total) + '</div></div>';
+  }).join('') : '<div class="empty">Belum ada transaksi</div>';
+}
+
+/* ========================= KASIR ========================= */
+var cart = {};          // pid -> {qty, disk:{v,p}}
+var cartDisk = { v: 0, p: false };
+var cartNote = '';
+var kasirKat = 0;       // 0 = semua
+
+function cartCount() {
+  var n = 0; for (var k in cart) n += cart[k].qty; return n;
+}
+function renderCatChips() {
+  var el = document.getElementById('catChips');
+  var html = '<div class="chip' + (kasirKat === 0 ? ' on' : '') + '" onclick="kasirKat=0;renderCatChips();renderProducts()">Semua</div>';
+  DB.kategori.forEach(function (k) {
+    html += '<div class="chip' + (kasirKat === k.id ? ' on' : '') + '" onclick="kasirKat=' + k.id + ';renderCatChips();renderProducts()">' + esc(k.nama) + '</div>';
+  });
+  el.innerHTML = html;
+}
+function renderProducts() {
+  var q = (document.getElementById('searchBox').value || '').toLowerCase();
+  var list = DB.produk.filter(function (p) {
+    if (kasirKat && p.kat !== kasirKat) return false;
+    if (q && p.nama.toLowerCase().indexOf(q) < 0 && (p.sku || '').toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+  document.getElementById('noProducts').style.display = list.length ? 'none' : '';
+  document.getElementById('productGrid').innerHTML = list.map(function (p) {
+    var inCart = cart[p.id] ? cart[p.id].qty : 0;
+    var habis = p.stok <= 0;
+    var low = !habis && p.stok <= p.batas;
+    return '<div class="pcard' + (habis ? ' dis' : '') + '" onclick="addCart(' + p.id + ')">' +
+      (inCart ? '<div class="qty">' + inCart + '</div>' : '') +
+      '<div class="nm">' + esc(p.nama) + '</div>' +
+      '<div class="pr money">' + fmt(p.jual) + '</div>' +
+      '<div class="st' + (habis || low ? ' low' : '') + '">' +
+      (habis ? 'Stok habis' : 'Stok: ' + p.stok) + '</div></div>';
+  }).join('');
+  updateCartbar();
+}
+function addCart(pid) {
+  var p = DB.produk.find(function (x) { return x.id === pid; });
+  if (!p || p.stok <= 0) return;
+  if (!cart[pid]) cart[pid] = { qty: 0, disk: { v: 0, p: false } };
+  if (cart[pid].qty >= p.stok) { toast('Stok "' + p.nama + '" tinggal ' + p.stok); return; }
+  cart[pid].qty++;
+  renderProducts();
+}
+function ubahQty(pid, delta) {
+  var p = DB.produk.find(function (x) { return x.id === pid; });
+  if (!cart[pid]) return;
+  cart[pid].qty += delta;
+  if (p && cart[pid].qty > p.stok) cart[pid].qty = p.stok;
+  if (cart[pid].qty <= 0) delete cart[pid];
+  renderCartSheet(); renderProducts();
+}
+function updateCartbar() {
+  var n = cartCount();
+  var t = hitungTotal();
+  document.getElementById('cbCount').textContent = n;
+  document.getElementById('cbTotal').textContent = fmt(t.total);
+  var kasirAktif = document.getElementById('view-kasir').classList.contains('on');
+  document.getElementById('cartbar').classList.toggle('on', kasirAktif && n > 0);
+}
+
+/* diskon: {v, p} — p=true artinya persen */
+function resolveDisk(d, dasar) {
+  if (!d || !d.v) return 0;
+  var x = d.p ? dasar * d.v / 100 : d.v;
+  return Math.max(0, Math.min(Math.round(x), dasar));
+}
+function hitungTotal() {
+  var sub = 0;
+  for (var k in cart) {
+    var p = DB.produk.find(function (x) { return x.id === +k; });
+    if (!p) continue;
+    var gross = p.jual * cart[k].qty;
+    sub += gross - resolveDisk(cart[k].disk, gross);
+  }
+  var disk = resolveDisk(cartDisk, sub);
+  var dpp = sub - disk;
+  var pajak = Math.round(dpp * (parseFloat(DB.set.pajak) || 0) / 100);
+  return { sub: sub, disk: disk, pajak: pajak, total: dpp + pajak };
+}
+
+/* ---------------------- Sheet keranjang ---------------------- */
+function openCart() { renderCartSheet(); openSheet('sheetCart'); }
+function renderCartSheet() {
+  var t = hitungTotal();
+  var rows = '';
+  for (var k in cart) {
+    (function (k) {
+      var p = DB.produk.find(function (x) { return x.id === +k; });
+      if (!p) return;
+      var gross = p.jual * cart[k].qty;
+      var d = resolveDisk(cart[k].disk, gross);
+      rows += '<div class="crow">' +
+        '<div class="inf"><div class="n">' + esc(p.nama) + '</div>' +
+        '<div class="p money">' + fmt(p.jual) + ' × ' + cart[k].qty + '</div>' +
+        '<div class="d" onclick="openDiskon(' + k + ')" style="cursor:pointer">' +
+        (d ? '− ' + fmt(d) + ' ✎' : '+ diskon item') + '</div></div>' +
+        '<button class="qbtn" onclick="ubahQty(' + k + ',-1)">−</button>' +
+        '<div class="q">' + cart[k].qty + '</div>' +
+        '<button class="qbtn" onclick="ubahQty(' + k + ',1)">+</button>' +
+        '<div class="tot money">' + plain(gross - d) + '</div></div>';
+    })(k);
+  }
+  if (!rows) { closeSheets(); return; }
+  var html = '<h2>Keranjang</h2>' + rows +
+    '<div class="field" style="margin-top:12px"><label>Catatan</label>' +
+    '<input class="input" id="cartNote" value="' + esc(cartNote) + '" placeholder="mis. dibungkus" oninput="cartNote=this.value"></div>' +
+    '<div class="sumrow"><span>Subtotal</span><span class="money">' + plain(t.sub) + '</span></div>' +
+    '<div class="sumrow"><span class="clickable" onclick="openDiskon(0)">Diskon total ✎</span><span class="money">− ' + plain(t.disk) + '</span></div>' +
+    (t.pajak ? '<div class="sumrow"><span>Pajak (' + DB.set.pajak + '%)</span><span class="money">' + plain(t.pajak) + '</span></div>' : '') +
+    '<div class="sumrow big"><span>Total</span><span class="money">' + fmt(t.total) + '</span></div>' +
+    '<div class="grid2" style="margin-top:12px">' +
+    '<button class="btn danger" onclick="kosongkan()">Kosongkan</button>' +
+    '<button class="btn" onclick="openPay()">Bayar →</button></div>';
+  document.getElementById('sheetCartBody').innerHTML = html;
+}
+function kosongkan() {
+  if (!confirm('Kosongkan keranjang?')) return;
+  cart = {}; cartDisk = { v: 0, p: false }; cartNote = '';
+  closeSheets(); renderProducts();
+}
+
+/* diskon editor — target 0 = diskon total, selain itu pid */
+var diskTarget = 0;
+function openDiskon(target) {
+  diskTarget = target;
+  var d = target ? (cart[target] ? cart[target].disk : { v: 0, p: false }) : cartDisk;
+  var html = '<h2>' + (target ? 'Diskon Item' : 'Diskon Total') + '</h2>' +
+    '<div class="paytabs"><div class="paytab' + (!d.p ? ' on' : '') + '" id="dkRp" onclick="dkMode(false)">Rp</div>' +
+    '<div class="paytab' + (d.p ? ' on' : '') + '" id="dkPct" onclick="dkMode(true)">%</div></div>' +
+    '<div class="field"><input class="input" id="dkVal" type="number" inputmode="decimal" value="' + (d.v || '') + '" placeholder="0"></div>' +
+    '<div class="grid2"><button class="btn line" onclick="setDiskon(0,false)">Hapus Diskon</button>' +
+    '<button class="btn" onclick="applyDiskon()">Terapkan</button></div>';
+  document.getElementById('sheetDiskonBody').innerHTML = html;
+  window._dkPersen = d.p;
+  openSheet('sheetDiskon');
+}
+function dkMode(persen) {
+  window._dkPersen = persen;
+  document.getElementById('dkRp').classList.toggle('on', !persen);
+  document.getElementById('dkPct').classList.toggle('on', persen);
+}
+function applyDiskon() {
+  var v = parseFloat(document.getElementById('dkVal').value) || 0;
+  if (window._dkPersen) v = Math.min(v, 100);
+  setDiskon(v, window._dkPersen);
+}
+function setDiskon(v, p) {
+  if (diskTarget) { if (cart[diskTarget]) cart[diskTarget].disk = { v: v, p: p }; }
+  else cartDisk = { v: v, p: p };
+  closeSheets(); openCart();
+}
+
+/* ---------------------- Sheet pembayaran ---------------------- */
+var payMetode = 'TUNAI';
+function openPay() {
+  payMetode = 'TUNAI';
+  renderPaySheet();
+  closeSheets(); openSheet('sheetPay');
+}
+function renderPaySheet() {
+  var t = hitungTotal();
+  var opts = quickCash(t.total);
+  var html = '<h2>Pembayaran</h2>' +
+    '<div class="sumrow big" style="padding-top:0"><span>Total</span><span class="money">' + fmt(t.total) + '</span></div>' +
+    '<div class="paytabs">' +
+    '<div class="paytab' + (payMetode === 'TUNAI' ? ' on' : '') + '" onclick="payMetode=\'TUNAI\';renderPaySheet()">💵 Tunai</div>' +
+    '<div class="paytab' + (payMetode === 'QRIS' ? ' on' : '') + '" onclick="payMetode=\'QRIS\';renderPaySheet()">📱 QRIS</div></div>';
+
+  if (payMetode === 'TUNAI') {
+    html += '<div class="field"><label>Uang Diterima</label>' +
+      '<input class="input money" id="payAmount" type="number" inputmode="numeric" placeholder="0" oninput="updateKembali()"></div>' +
+      '<div class="cashopts">' + opts.map(function (o) {
+        return '<div class="chip" onclick="setBayar(' + o + ')">' + plain(o) + '</div>';
+      }).join('') + '</div>' +
+      '<div class="sumrow big"><span>Kembalian</span><span class="money" id="payKembali">—</span></div>';
+  } else {
+    html += DB.set.qris
+      ? '<div class="qris-box"><img src="' + DB.set.qris + '" alt="QRIS"><div class="muted" style="margin-top:8px">Minta pembeli memindai kode di atas</div></div>'
+      : '<div class="empty">Gambar QRIS belum diatur.<br>Unggah lewat <b>Setelan → QRIS Statis</b>.</div>';
+  }
+  html += '<button class="btn" style="margin-top:12px" id="payGo" onclick="checkout()"' +
+    (payMetode === 'TUNAI' ? ' disabled' : '') + '>Selesaikan Transaksi</button>';
+  document.getElementById('sheetPayBody').innerHTML = html;
+}
+function quickCash(total) {
+  var notes = [10000, 20000, 50000, 100000];
+  var arr = [total];
+  notes.forEach(function (n) {
+    var r = Math.ceil(total / n) * n;
+    if (r > total && arr.indexOf(r) < 0) arr.push(r);
+  });
+  return arr.slice(0, 4);
+}
+function setBayar(v) {
+  document.getElementById('payAmount').value = v;
+  updateKembali();
+}
+function updateKembali() {
+  var t = hitungTotal();
+  var bayar = parseFloat(document.getElementById('payAmount').value) || 0;
+  var k = bayar - t.total;
+  document.getElementById('payKembali').textContent = k >= 0 ? fmt(k) : '—';
+  document.getElementById('payGo').disabled = k < 0;
+}
+
+/* ------------------------- Checkout ------------------------- */
+function checkout() {
+  var t = hitungTotal();
+  var items = [];
+  for (var k in cart) {
+    var p = DB.produk.find(function (x) { return x.id === +k; });
+    if (!p) continue;
+    if (p.stok < cart[k].qty) { toast('Stok "' + p.nama + '" tidak cukup'); return; }
+    var gross = p.jual * cart[k].qty;
+    var d = resolveDisk(cart[k].disk, gross);
+    items.push({ pid: p.id, nama: p.nama, qty: cart[k].qty, harga: p.jual, beli: p.beli, diskon: d, total: gross - d });
+  }
+  if (!items.length) return;
+
+  var bayar = payMetode === 'QRIS' ? t.total : (parseFloat(document.getElementById('payAmount').value) || 0);
+  if (bayar < t.total) { toast('Uang diterima kurang'); return; }
+
+  // kurangi stok
+  items.forEach(function (i) {
+    var p = DB.produk.find(function (x) { return x.id === i.pid; });
+    p.stok -= i.qty;
+  });
+
+  var trx = {
+    id: uid(), no: noStruk(), waktu: Date.now(), kasir: DB.set.kasir,
+    items: items, subtotal: t.sub, diskon: t.disk,
+    diskonInput: cartDisk.v, diskonPersen: cartDisk.p,
+    pajak: t.pajak, total: t.total, metode: payMetode,
+    bayar: bayar, kembali: bayar - t.total,
+    catatan: cartNote.trim(), batal: false
+  };
+  DB.transaksi.push(trx);
+  save();
+
+  cart = {}; cartDisk = { v: 0, p: false }; cartNote = '';
+  renderProducts();
+  closeSheets();
+  showSukses(trx);
+  cetakStruk(trx, true); // cetak otomatis; kegagalan hanya jadi pesan
+}
+function showSukses(trx, pesanCetak) {
+  var html = '<div class="okwrap">' +
+    '<div class="ic"><svg viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg></div>' +
+    '<h2 style="margin-bottom:4px">Transaksi Berhasil</h2>' +
+    '<div class="muted">' + esc(trx.no) + '</div>' +
+    (trx.kembali > 0 ? '<div class="muted" style="margin-top:12px">Kembalian</div><div class="chg money">' + fmt(trx.kembali) + '</div>' : '') +
+    '<div id="printMsg" class="muted" style="color:var(--red);margin-top:10px">' + (pesanCetak || '') + '</div>' +
+    '<div class="grid2" style="margin-top:16px">' +
+    '<button class="btn ghost" onclick="cetakStruk(getTrx(' + trx.id + '),true)">🖨 Cetak Struk</button>' +
+    '<button class="btn" onclick="closeSheets()">Transaksi Baru</button></div></div>';
+  document.getElementById('sheetOkBody').innerHTML = html;
+  openSheet('sheetOk');
+}
+function getTrx(id) { return DB.transaksi.find(function (t) { return t.id === id; }); }
+
+/* ==================== ESC/POS & PENCETAKAN ==================== */
+function EscPos(width) {
+  var buf = [];
+  function push() { for (var i = 0; i < arguments.length; i++) buf.push(arguments[i] & 0xFF); }
+  function textBytes(s) {
+    s = String(s);
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      buf.push(c >= 32 && c <= 126 ? c : 63); // non-ASCII -> '?'
+    }
+  }
+  var api = {
+    width: width,
+    init: function () { push(0x1B, 0x40); return api; },
+    left: function () { push(0x1B, 0x61, 0); return api; },
+    center: function () { push(0x1B, 0x61, 1); return api; },
+    bold: function (on) { push(0x1B, 0x45, on ? 1 : 0); return api; },
+    size: function (w, h) { push(0x1D, 0x21, ((w ? 1 : 0) << 4) | (h ? 1 : 0)); return api; },
+    line: function (s) { textBytes(s == null ? '' : s); push(0x0A); return api; },
+    feed: function (n) { push(0x1B, 0x64, n || 1); return api; },
+    cut: function () { push(0x1D, 0x56, 0x42, 0x00); return api; },
+    base64: function () {
+      var bin = '';
+      for (var i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+      return btoa(bin);
+    }
+  };
+  return api;
+}
+function dua(kiri, kanan, w) {
+  kiri = String(kiri); kanan = String(kanan);
+  var ruang = w - kanan.length;
+  if (kiri.length > ruang - 1) kiri = kiri.slice(0, Math.max(0, ruang - 1));
+  while (kiri.length < ruang) kiri += ' ';
+  return kiri + kanan;
+}
+function bungkus(s, w) {
+  s = String(s); var out = [];
+  var kata = s.split(' '), cur = '';
+  kata.forEach(function (k) {
+    while (k.length > w) { if (cur) { out.push(cur); cur = ''; } out.push(k.slice(0, w)); k = k.slice(w); }
+    if (!cur) cur = k;
+    else if ((cur + ' ' + k).length <= w) cur += ' ' + k;
+    else { out.push(cur); cur = k; }
+  });
+  if (cur) out.push(cur);
+  return out.length ? out : [''];
+}
+function garis(w) { return new Array(w + 1).join('-'); }
+
+/** Susun byte struk untuk satu transaksi. */
+function buildStruk(trx) {
+  var w = DB.set.paper == 80 ? 48 : 32;
+  var p = EscPos(w).init();
+  p.center().bold(true).size(0, 1).line(DB.set.nama).size(0, 0).bold(false);
+  if (DB.set.alamat) bungkus(DB.set.alamat, w).forEach(function (l) { p.line(l); });
+  if (DB.set.telp) p.line(DB.set.telp);
+  p.left().line(garis(w));
+  p.line('No    : ' + trx.no);
+  p.line('Tgl   : ' + tgl(trx.waktu));
+  p.line('Kasir : ' + trx.kasir);
+  p.line(garis(w));
+  trx.items.forEach(function (i) {
+    bungkus(i.nama, w).forEach(function (l) { p.line(l); });
+    p.line(dua('  ' + i.qty + ' x ' + plain(i.harga), plain(i.qty * i.harga), w));
+    if (i.diskon > 0) p.line(dua('  Disk. item', '-' + plain(i.diskon), w));
+  });
+  p.line(garis(w));
+  p.line(dua('Subtotal', plain(trx.subtotal), w));
+  if (trx.diskon > 0) {
+    var lbl = trx.diskonPersen ? 'Diskon (' + trx.diskonInput + '%)' : 'Diskon';
+    p.line(dua(lbl, '-' + plain(trx.diskon), w));
+  }
+  if (trx.pajak > 0) p.line(dua('Pajak (' + DB.set.pajak + '%)', plain(trx.pajak), w));
+  p.bold(true).line(dua('TOTAL', plain(trx.total), w)).bold(false);
+  p.line(dua(trx.metode === 'QRIS' ? 'QRIS' : 'Tunai', plain(trx.bayar), w));
+  if (trx.metode !== 'QRIS') p.line(dua('Kembali', plain(trx.kembali), w));
+  if (trx.catatan) { p.line(garis(w)); bungkus('Catatan: ' + trx.catatan, w).forEach(function (l) { p.line(l); }); }
+  p.line(garis(w));
+  p.center();
+  bungkus(DB.set.footer || '', w).forEach(function (l) { p.line(l); });
+  if (trx.batal) p.bold(true).line('*** DIBATALKAN ***').bold(false);
+  p.feed(3).cut();
+  return p;
+}
+
+/** Kirim byte ke printer lewat jembatan native. */
+function kirimKePrinter(escpos, cb) {
+  if (!hasBridge()) { cb('Cetak hanya tersedia di aplikasi Android'); return; }
+  if (!DB.set.printerMac) { cb('Printer belum diatur — buka Setelan → Printer'); return; }
+  if (!AishApp.hasBluetoothPermission()) {
+    window.onAishBtPermission = function (granted) {
+      if (granted) kirimKePrinter(escpos, cb);
+      else cb('Izin Bluetooth ditolak');
+    };
+    AishApp.requestBluetoothPermission();
+    return;
+  }
+  // printEscPos berjalan sinkron di thread jembatan — beri jeda kecil agar UI sempat render
+  setTimeout(function () {
+    var hasil = AishApp.printEscPos(escpos.base64(), DB.set.printerMac);
+    cb(hasil === 'ok' ? null : hasil);
+  }, 50);
+}
+function cetakStruk(trx, tampilkanPesan) {
+  if (!trx) return;
+  kirimKePrinter(buildStruk(trx), function (err) {
+    var el = document.getElementById('printMsg');
+    if (err) {
+      if (el) el.textContent = err; else toast(err);
+    } else {
+      if (el) el.textContent = '';
+      if (tampilkanPesan) toast('Struk dikirim ke printer 🖨');
+    }
+  });
+}
+
+/* ========================= PRODUK ========================= */
+function renderKatChips() {
+  document.getElementById('katList').innerHTML = DB.kategori.length
+    ? DB.kategori.map(function (k) { return '<div class="chip">' + esc(k.nama) + '</div>'; }).join('')
+    : '<div class="muted">Belum ada kategori.</div>';
+}
+function renderProdukList() {
+  var q = (document.getElementById('prodSearch').value || '').toLowerCase();
+  var list = DB.produk.filter(function (p) {
+    return !q || p.nama.toLowerCase().indexOf(q) >= 0 || (p.sku || '').toLowerCase().indexOf(q) >= 0;
+  });
+  document.getElementById('produkList').innerHTML = list.length ? list.map(function (p) {
+    var kat = DB.kategori.find(function (k) { return k.id === p.kat; });
+    var low = p.stok <= p.batas;
+    return '<div class="list-item" onclick="openProdukForm(' + p.id + ')">' +
+      '<div class="ic">' + esc(p.nama.charAt(0).toUpperCase()) + '</div>' +
+      '<div class="inf"><div class="n">' + esc(p.nama) + '</div>' +
+      '<div class="s">' + (kat ? esc(kat.nama) : 'Tanpa kategori') + ' • Stok ' + p.stok +
+      (low ? ' <span class="pill red">menipis</span>' : '') + '</div></div>' +
+      '<div class="val money">' + fmt(p.jual) + '</div></div>';
+  }).join('') : '<div class="empty">Belum ada produk.<br>Ketuk tombol ＋ untuk menambah.</div>';
+}
+function openProdukForm(id) {
+  var p = id ? DB.produk.find(function (x) { return x.id === id; }) : null;
+  var katOpts = '<option value="0">Tanpa kategori</option>' + DB.kategori.map(function (k) {
+    return '<option value="' + k.id + '"' + (p && p.kat === k.id ? ' selected' : '') + '>' + esc(k.nama) + '</option>';
+  }).join('');
+  var html = '<h2>' + (p ? 'Ubah Produk' : 'Tambah Produk') + '</h2>' +
+    '<div class="field"><label>Nama Produk *</label><input class="input" id="fNama" value="' + (p ? esc(p.nama) : '') + '"></div>' +
+    '<div class="grid2">' +
+    '<div class="field"><label>SKU / Barcode</label><input class="input" id="fSku" value="' + (p ? esc(p.sku || '') : '') + '"></div>' +
+    '<div class="field"><label>Kategori</label><select class="input" id="fKat">' + katOpts + '</select></div></div>' +
+    '<div class="grid2">' +
+    '<div class="field"><label>Harga Beli</label><input class="input" id="fBeli" type="number" inputmode="numeric" value="' + (p ? p.beli : '') + '"></div>' +
+    '<div class="field"><label>Harga Jual *</label><input class="input" id="fJual" type="number" inputmode="numeric" value="' + (p ? p.jual : '') + '"></div></div>' +
+    '<div class="grid2">' +
+    '<div class="field"><label>Stok</label><input class="input" id="fStok" type="number" inputmode="numeric" value="' + (p ? p.stok : 0) + '"></div>' +
+    '<div class="field"><label>Batas Stok Menipis</label><input class="input" id="fBatas" type="number" inputmode="numeric" value="' + (p ? p.batas : 5) + '"></div></div>' +
+    '<div class="grid2" style="margin-top:4px">' +
+    (p ? '<button class="btn danger" onclick="hapusProduk(' + p.id + ')">Hapus</button>' : '<button class="btn line" onclick="closeSheets()">Batal</button>') +
+    '<button class="btn" onclick="saveProduk(' + (p ? p.id : 0) + ')">Simpan</button></div>';
+  document.getElementById('sheetProdukBody').innerHTML = html;
+  openSheet('sheetProduk');
+}
+function saveProduk(id) {
+  var nama = document.getElementById('fNama').value.trim();
+  var jual = parseFloat(document.getElementById('fJual').value) || 0;
+  if (!nama || jual <= 0) { toast('Nama & harga jual wajib diisi'); return; }
+  var data = {
+    nama: nama,
+    sku: document.getElementById('fSku').value.trim(),
+    kat: parseInt(document.getElementById('fKat').value) || 0,
+    beli: parseFloat(document.getElementById('fBeli').value) || 0,
+    jual: jual,
+    stok: parseInt(document.getElementById('fStok').value) || 0,
+    batas: parseInt(document.getElementById('fBatas').value) || 0
+  };
+  if (id) {
+    var p = DB.produk.find(function (x) { return x.id === id; });
+    Object.assign(p, data);
+  } else {
+    data.id = uid();
+    DB.produk.push(data);
+  }
+  save(); closeSheets(); renderProdukList(); toast('Produk tersimpan');
+}
+function hapusProduk(id) {
+  if (!confirm('Hapus produk ini? Riwayat transaksi lama tetap aman.')) return;
+  DB.produk = DB.produk.filter(function (p) { return p.id !== id; });
+  delete cart[id];
+  save(); closeSheets(); renderProdukList(); toast('Produk dihapus');
+}
+
+/* ------------------------- Kategori ------------------------- */
+function openKategori() {
+  var rows = DB.kategori.map(function (k) {
+    return '<div class="crow"><div class="inf"><div class="n">' + esc(k.nama) + '</div></div>' +
+      '<button class="btn danger sm" onclick="hapusKategori(' + k.id + ')">Hapus</button></div>';
+  }).join('');
+  var html = '<h2>Kategori</h2>' + (rows || '<div class="empty">Belum ada kategori</div>') +
+    '<div class="field" style="margin-top:12px"><label>Kategori Baru</label>' +
+    '<input class="input" id="fKatBaru" placeholder="mis. Minuman"></div>' +
+    '<button class="btn" onclick="tambahKategori()">Tambah</button>';
+  document.getElementById('sheetKategoriBody').innerHTML = html;
+  openSheet('sheetKategori');
+}
+function tambahKategori() {
+  var nama = document.getElementById('fKatBaru').value.trim();
+  if (!nama) return;
+  if (DB.kategori.some(function (k) { return k.nama.toLowerCase() === nama.toLowerCase(); })) {
+    toast('Kategori sudah ada'); return;
+  }
+  DB.kategori.push({ id: uid(), nama: nama });
+  save(); openKategori(); renderKatChips();
+}
+function hapusKategori(id) {
+  if (!confirm('Hapus kategori? Produk di dalamnya menjadi tanpa kategori.')) return;
+  DB.kategori = DB.kategori.filter(function (k) { return k.id !== id; });
+  DB.produk.forEach(function (p) { if (p.kat === id) p.kat = 0; });
+  if (kasirKat === id) kasirKat = 0;
+  save(); openKategori(); renderKatChips();
+}
+
+/* ========================= RIWAYAT ========================= */
+var histPeriod = 'hari';
+function setHistPeriod(p, btn) {
+  histPeriod = p;
+  var seg = document.getElementById('histSeg').children;
+  for (var i = 0; i < seg.length; i++) seg[i].classList.remove('on');
+  btn.classList.add('on');
+  renderHist();
+}
+function renderHist() {
+  var b = periodBounds(histPeriod);
+  var list = DB.transaksi.filter(function (t) { return t.waktu >= b[0]; }).reverse();
+  document.getElementById('histList').innerHTML = list.length ? list.map(function (t) {
+    var n = 0; t.items.forEach(function (i) { n += i.qty; });
+    return '<div class="list-item" onclick="openDetail(' + t.id + ')">' +
+      '<div class="ic">' + (t.metode === 'QRIS' ? 'QR' : 'Rp') + '</div>' +
+      '<div class="inf"><div class="n">' + esc(t.no) +
+      (t.batal ? ' <span class="pill red">batal</span>' : '') + '</div>' +
+      '<div class="s">' + tgl(t.waktu) + ' • ' + n + ' item • ' + t.metode + '</div></div>' +
+      '<div class="val money">' + fmt(t.total) + '</div></div>';
+  }).join('') : '<div class="empty">Tidak ada transaksi pada periode ini</div>';
+}
+function openDetail(id) {
+  var t = getTrx(id);
+  if (!t) return;
+  var rows = t.items.map(function (i) {
+    return '<div class="sumrow"><span>' + esc(i.nama) + ' ×' + i.qty +
+      (i.diskon ? ' <span class="pill mint">disk</span>' : '') + '</span>' +
+      '<span class="money">' + plain(i.total) + '</span></div>';
+  }).join('');
+  var html = '<h2>' + esc(t.no) + (t.batal ? ' <span class="pill red">dibatalkan</span>' : '') + '</h2>' +
+    '<div class="muted" style="margin-bottom:10px">' + tgl(t.waktu) + ' • Kasir: ' + esc(t.kasir) + '</div>' +
+    rows +
+    '<div style="border-top:1px solid var(--line);margin-top:8px;padding-top:8px">' +
+    '<div class="sumrow"><span>Subtotal</span><span class="money">' + plain(t.subtotal) + '</span></div>' +
+    (t.diskon ? '<div class="sumrow"><span>Diskon</span><span class="money">− ' + plain(t.diskon) + '</span></div>' : '') +
+    (t.pajak ? '<div class="sumrow"><span>Pajak</span><span class="money">' + plain(t.pajak) + '</span></div>' : '') +
+    '<div class="sumrow big"><span>Total</span><span class="money">' + fmt(t.total) + '</span></div>' +
+    '<div class="sumrow"><span>' + (t.metode === 'QRIS' ? 'QRIS' : 'Tunai') + '</span><span class="money">' + plain(t.bayar) + '</span></div>' +
+    (t.metode !== 'QRIS' ? '<div class="sumrow"><span>Kembalian</span><span class="money">' + plain(t.kembali) + '</span></div>' : '') +
+    (t.catatan ? '<div class="muted" style="margin-top:8px">Catatan: ' + esc(t.catatan) + '</div>' : '') + '</div>' +
+    '<div class="grid2" style="margin-top:14px">' +
+    (t.batal ? '<button class="btn line" onclick="closeSheets()">Tutup</button>'
+      : '<button class="btn danger" onclick="batalkan(' + t.id + ')">Batalkan</button>') +
+    '<button class="btn" onclick="cetakStruk(getTrx(' + t.id + '),true)">🖨 Cetak Ulang</button></div>';
+  document.getElementById('sheetDetailBody').innerHTML = html;
+  openSheet('sheetDetail');
+}
+function batalkan(id) {
+  if (!confirm('Batalkan transaksi ini? Stok akan dikembalikan.')) return;
+  var t = getTrx(id);
+  if (!t || t.batal) return;
+  t.batal = true;
+  t.items.forEach(function (i) {
+    var p = DB.produk.find(function (x) { return x.id === i.pid; });
+    if (p) p.stok += i.qty;
+  });
+  save(); closeSheets(); renderHist(); renderHome(); toast('Transaksi dibatalkan, stok dikembalikan');
+}
+
+/* ========================= LAPORAN ========================= */
+var repPeriod = 'hari';
+function setRepPeriod(p, btn) {
+  repPeriod = p;
+  var seg = document.getElementById('repSeg').children;
+  for (var i = 0; i < seg.length; i++) seg[i].classList.remove('on');
+  btn.classList.add('on');
+  renderLaporan();
+}
+function dataLaporan() {
+  var b = periodBounds(repPeriod);
+  var list = DB.transaksi.filter(function (t) { return t.waktu >= b[0] && !t.batal; });
+  var omzet = 0, laba = 0, top = {};
+  list.forEach(function (t) {
+    omzet += t.total;
+    t.items.forEach(function (i) {
+      laba += i.total - i.beli * i.qty;
+      var k = i.pid + '|' + i.nama;
+      if (!top[k]) top[k] = { nama: i.nama, qty: 0, omzet: 0 };
+      top[k].qty += i.qty; top[k].omzet += i.total;
+    });
+  });
+  var topArr = Object.keys(top).map(function (k) { return top[k]; })
+    .sort(function (a, b2) { return b2.qty - a.qty; }).slice(0, 10);
+  return { list: list, omzet: omzet, laba: laba, top: topArr };
+}
+function renderLaporan() {
+  var d = dataLaporan();
+  document.getElementById('repOmzet').textContent = fmt(d.omzet);
+  document.getElementById('repLaba').textContent = fmt(d.laba);
+  document.getElementById('repTrx').textContent = d.list.length;
+  document.getElementById('topList').innerHTML = d.top.length ? d.top.map(function (t, i) {
+    return '<div class="list-item" style="cursor:default">' +
+      '<div class="ic">' + (i + 1) + '</div>' +
+      '<div class="inf"><div class="n">' + esc(t.nama) + '</div>' +
+      '<div class="s">' + t.qty + ' terjual</div></div>' +
+      '<div class="val money">' + fmt(t.omzet) + '</div></div>';
+  }).join('') : '<div class="empty">Belum ada data pada periode ini</div>';
+}
+function labelPeriode() {
+  return repPeriod === 'hari' ? 'Hari Ini' : repPeriod === 'minggu' ? 'Minggu Ini' : 'Bulan Ini';
+}
+function exportCsv() {
+  var d = dataLaporan();
+  var rows = [
+    ['Laporan Penjualan', DB.set.nama],
+    ['Periode', labelPeriode()],
+    [],
+    ['RINGKASAN'],
+    ['Jumlah Transaksi', d.list.length],
+    ['Total Omzet', d.omzet],
+    ['Total Laba', d.laba],
+    [],
+    ['PRODUK TERLARIS'],
+    ['Produk', 'Qty', 'Omzet']
+  ];
+  d.top.forEach(function (t) { rows.push([t.nama, t.qty, t.omzet]); });
+  rows.push([]);
+  rows.push(['DETAIL TRANSAKSI']);
+  rows.push(['No', 'Waktu', 'Metode', 'Subtotal', 'Diskon', 'Pajak', 'Total']);
+  d.list.forEach(function (t) {
+    rows.push([t.no, tgl(t.waktu), t.metode, t.subtotal, t.diskon, t.pajak, t.total]);
+  });
+  var csv = rows.map(function (r) {
+    return r.map(function (c) {
+      c = String(c == null ? '' : c);
+      return /[";\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c;
+    }).join(';');
+  }).join('\r\n');
+
+  var nama = 'laporan-aishkas-' + new Date().toISOString().slice(0, 10) + '.csv';
+  if (hasBridge()) {
+    var lokasi = AishApp.saveFile('﻿' + csv, nama, 'text/csv');
+    toast(lokasi ? 'CSV tersimpan di ' + lokasi : 'Gagal menyimpan CSV');
+  } else {
+    var a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('﻿' + csv);
+    a.download = nama; a.click();
+  }
+}
+/** Cetak ringkasan laporan ke printer termal. */
+function printReport() {
+  var d = dataLaporan();
+  var w = DB.set.paper == 80 ? 48 : 32;
+  var p = EscPos(w).init();
+  p.center().bold(true).line('LAPORAN PENJUALAN').bold(false);
+  p.line(DB.set.nama);
+  p.line(labelPeriode() + ' - ' + tgl(Date.now()));
+  p.left().line(garis(w));
+  p.line(dua('Transaksi', String(d.list.length), w));
+  p.line(dua('Omzet', plain(d.omzet), w));
+  p.line(dua('Laba', plain(d.laba), w));
+  p.line(garis(w));
+  p.bold(true).line('PRODUK TERLARIS').bold(false);
+  d.top.slice(0, 5).forEach(function (t) {
+    bungkus(t.nama, w).forEach(function (l) { p.line(l); });
+    p.line(dua('  ' + t.qty + ' terjual', plain(t.omzet), w));
+  });
+  p.feed(3).cut();
+  kirimKePrinter(p, function (err) { toast(err || 'Laporan dikirim ke printer 🖨'); });
+}
+
+/* ========================= SETELAN ========================= */
+function renderSetelan() {
+  var s = DB.set;
+  document.getElementById('setNama').value = s.nama;
+  document.getElementById('setAlamat').value = s.alamat;
+  document.getElementById('setTelp').value = s.telp;
+  document.getElementById('setKasir').value = s.kasir;
+  document.getElementById('setCur').value = s.cur;
+  document.getElementById('setPajak').value = s.pajak || '';
+  document.getElementById('setFooter').value = s.footer;
+  // QRIS
+  document.getElementById('qrisPreview').style.display = s.qris ? '' : 'none';
+  document.getElementById('qrisDel').style.display = s.qris ? '' : 'none';
+  if (s.qris) document.getElementById('qrisImg').src = s.qris;
+  // printer
+  document.getElementById('printerNow').innerHTML = s.printerMac
+    ? 'Printer aktif: <b>' + esc(s.printerNama) + '</b> <span class="muted">(' + s.printerMac + ')</span>'
+    : 'Belum ada printer tersimpan.';
+  document.getElementById('pap58').classList.toggle('on', s.paper != 80);
+  document.getElementById('pap80').classList.toggle('on', s.paper == 80);
+}
+function saveSettings() {
+  DB.set.nama = document.getElementById('setNama').value.trim() || 'Toko Saya';
+  DB.set.alamat = document.getElementById('setAlamat').value.trim();
+  DB.set.telp = document.getElementById('setTelp').value.trim();
+  DB.set.kasir = document.getElementById('setKasir').value.trim() || 'Kasir';
+  DB.set.cur = document.getElementById('setCur').value.trim() || 'Rp';
+  DB.set.pajak = parseFloat(document.getElementById('setPajak').value) || 0;
+  DB.set.footer = document.getElementById('setFooter').value.trim();
+  save(); toast('Profil toko tersimpan');
+}
+function loadQris(input) {
+  var f = input.files && input.files[0];
+  if (!f) return;
+  var r = new FileReader();
+  r.onload = function () {
+    // kompres ringan agar muat di localStorage
+    var img = new Image();
+    img.onload = function () {
+      var c = document.createElement('canvas');
+      var maks = 720, sk = Math.min(1, maks / Math.max(img.width, img.height));
+      c.width = Math.round(img.width * sk); c.height = Math.round(img.height * sk);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      DB.set.qris = c.toDataURL('image/jpeg', 0.85);
+      save(); renderSetelan(); toast('Gambar QRIS tersimpan');
+    };
+    img.src = r.result;
+  };
+  r.readAsDataURL(f);
+  input.value = '';
+}
+function removeQris() {
+  DB.set.qris = ''; save(); renderSetelan();
+}
+function setPaper(mm) {
+  DB.set.paper = mm; save(); renderSetelan();
+}
+function scanPrinters() {
+  if (!hasBridge()) { toast('Fitur printer hanya ada di aplikasi Android'); return; }
+  if (!AishApp.hasBluetoothPermission()) {
+    window.onAishBtPermission = function (granted) {
+      if (granted) scanPrinters(); else toast('Izin Bluetooth ditolak');
+    };
+    AishApp.requestBluetoothPermission();
+    return;
+  }
+  if (!AishApp.isBluetoothOn()) { toast('Bluetooth mati — nyalakan dulu di HP'); return; }
+  var list = [];
+  try { list = JSON.parse(AishApp.getPairedPrinters()); } catch (e) { }
+  var el = document.getElementById('printerList');
+  el.innerHTML = list.length ? list.map(function (d) {
+    var aktif = DB.set.printerMac === d.mac;
+    return '<div class="list-item" onclick="pilihPrinter(\'' + d.mac + '\',\'' + esc(d.name).replace(/'/g, "\\'") + '\')">' +
+      '<div class="ic">🖨</div>' +
+      '<div class="inf"><div class="n">' + esc(d.name) + '</div><div class="s">' + d.mac + '</div></div>' +
+      (aktif ? '<span class="pill mint">aktif</span>' : '') + '</div>';
+  }).join('') : '<div class="empty">Tidak ada perangkat terpasang.<br>Pasangkan dulu lewat Pengaturan Bluetooth HP.</div>';
+}
+function pilihPrinter(mac, nama) {
+  DB.set.printerMac = mac; DB.set.printerNama = nama;
+  if (hasBridge()) AishApp.disconnectPrinter();
+  save(); renderSetelan(); scanPrinters(); toast('Printer tersimpan: ' + nama);
+}
+function testPrint() {
+  var w = DB.set.paper == 80 ? 48 : 32;
+  var p = EscPos(w).init();
+  p.center().bold(true).size(0, 1).line('AISH KAS').size(0, 0).bold(false);
+  p.line(DB.set.nama);
+  p.left().line(garis(w));
+  p.line('Tes cetak berhasil!');
+  p.line('Kertas: ' + (DB.set.paper == 80 ? '80mm' : '58mm') + ' (' + w + ' kolom)');
+  p.line(garis(w));
+  p.line(dua('Kolom kiri', 'Kolom kanan', w));
+  p.feed(3).cut();
+  kirimKePrinter(p, function (err) { toast(err || 'Tes cetak terkirim 🖨'); });
+}
+
+/* -------------------- Cadangkan & pulihkan -------------------- */
+function backupData() {
+  var json = JSON.stringify(DB, null, 1);
+  var nama = 'aishkas-cadangan-' + new Date().toISOString().slice(0, 10) + '.json';
+  if (hasBridge()) {
+    var lokasi = AishApp.saveBackup(json, nama);
+    toast(lokasi ? 'Cadangan tersimpan di ' + lokasi : 'Gagal menyimpan cadangan');
+  } else {
+    var a = document.createElement('a');
+    a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+    a.download = nama; a.click();
+  }
+}
+function restoreData(input) {
+  var f = input.files && input.files[0];
+  if (!f) return;
+  var r = new FileReader();
+  r.onload = function () {
+    try {
+      var d = JSON.parse(r.result);
+      if (!d || !Array.isArray(d.produk) || !Array.isArray(d.transaksi) || !d.set) {
+        toast('Berkas bukan cadangan Aish Kas yang valid'); return;
+      }
+      if (!confirm('Pulihkan cadangan? SEMUA data saat ini akan diganti.')) return;
+      localStorage.setItem(KEY, JSON.stringify(d));
+      DB = load();
+      cart = {}; cartDisk = { v: 0, p: false }; cartNote = '';
+      renderSetelan(); renderHome();
+      toast('Data berhasil dipulihkan ✓');
+    } catch (e) {
+      toast('Berkas tidak bisa dibaca');
+    }
+  };
+  r.readAsText(f);
+  input.value = '';
+}
+
+/* --------------------------- Mulai --------------------------- */
+(function init() {
+  // contoh kategori pertama kali (tidak memaksa)
+  nav('home');
+})();
+</script>
+</body>
+</html>
